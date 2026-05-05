@@ -1,0 +1,79 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+/* ---------------------------------------------------------------
+   Dynamic weather themes — applied on the dashboard host element
+   via [ngClass] binding.
+   --------------------------------------------------------------- */
+
+/* Clear */
+.theme-clear-day {
+  background: linear-gradient(135deg, #f6d365, #fda085);
+}
+.theme-clear-night {
+  background: linear-gradient(135deg, #0f2027, #203a43, #2c5364);
+  color: white;
+}
+
+/* Clouds */
+.theme-clouds-day {
+  background: linear-gradient(135deg, #bdc3c7, #2c3e50);
+  color: white;
+}
+.theme-clouds-night {
+  background: linear-gradient(135deg, #2c3e50, #1a1a2e);
+  color: white;
+}
+
+/* Rain */
+.theme-rain-day {
+  background: linear-gradient(135deg, #4b6cb7, #182848);
+  color: white;
+}
+.theme-rain-night {
+  background: linear-gradient(135deg, #1a1a2e, #16213e);
+  color: white;
+}
+
+/* Snow */
+.theme-snow-day {
+  background: linear-gradient(135deg, #e6dada, #274046);
+  color: white;
+}
+.theme-snow-night {
+  background: linear-gradient(135deg, #2c3e50, #4ca1af);
+  color: white;
+}
+
+/* Thunderstorm */
+.theme-thunderstorm-day {
+  background: linear-gradient(135deg, #373b44, #4286f4);
+  color: white;
+}
+.theme-thunderstorm-night {
+  background: linear-gradient(135deg, #0f0c29, #302b63, #24243e);
+  color: white;
+}
+
+/* Mist / Fog / Haze */
+.theme-mist-day {
+  background: linear-gradient(135deg, #d7d2cc, #304352);
+  color: white;
+}
+.theme-mist-night {
+  background: linear-gradient(135deg, #232526, #414345);
+  color: white;
+}
+
+/* Smooth scrollbar for hourly forecast */
+::-webkit-scrollbar {
+  height: 6px;
+}
+::-webkit-scrollbar-track {
+  background: transparent;
+}
+::-webkit-scrollbar-thumb {
+  background: rgba(255, 255, 255, 0.3);
+  border-radius: 3px;
+}
