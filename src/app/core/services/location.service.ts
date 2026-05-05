@@ -37,24 +37,53 @@ export class LocationService {
         return;
       }
 
-      navigator.geolocation.getCurrentPosition(
-        (position) => {
-          const loc: Location = {
-            latitude: position.coords.latitude,
-            longitude: position.coords.longitude,
-          };
-          this.storeLocation(loc);
-          observer.next(loc);
-          observer.complete();
-        },
-        (error) => {
+      let settled = false;
+
+      const settle = (action: () => void): void => {
+        if (!settled) {
+          settled = true;
+          action();
+        }
+      };
+
+      const fallbackTimeout = setTimeout(() => {
+        settle(() => {
           const fallback = this.getStoredLocation();
           if (fallback) {
             observer.next(fallback);
             observer.complete();
           } else {
-            observer.error(new Error(this.mapGeolocationError(error)));
+            observer.error(
+              new Error('Location request timed out. Please search for a city manually.')
+            );
           }
+        });
+      }, 10000);
+
+      navigator.geolocation.getCurrentPosition(
+        (position) => {
+          clearTimeout(fallbackTimeout);
+          settle(() => {
+            const loc: Location = {
+              latitude: position.coords.latitude,
+              longitude: position.coords.longitude,
+            };
+            this.storeLocation(loc);
+            observer.next(loc);
+            observer.complete();
+          });
+        },
+        (error) => {
+          clearTimeout(fallbackTimeout);
+          settle(() => {
+            const fallback = this.getStoredLocation();
+            if (fallback) {
+              observer.next(fallback);
+              observer.complete();
+            } else {
+              observer.error(new Error(this.mapGeolocationError(error)));
+            }
+          });
         },
         { enableHighAccuracy: false, timeout: 10000, maximumAge: 300000 }
       );

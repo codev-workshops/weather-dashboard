@@ -92,13 +92,11 @@ interface WeatherState {
             </div>
           }
 
-          <!-- Location + search -->
-          @if (state.location) {
-            <app-location-display
-              [location]="state.location"
-              (citySearch)="onCitySearch($event)"
-            />
-          }
+          <!-- Location + search (always show search when no location so user can type a city) -->
+          <app-location-display
+            [location]="state.location!"
+            (citySearch)="onCitySearch($event)"
+          />
 
           <!-- Loading -->
           @if (state.loading) {
@@ -167,8 +165,13 @@ export class WeatherDashboardComponent implements OnInit {
    * 4. Results are mapped to a `WeatherState` consumed by the template.
    */
   private buildStatePipeline() {
+    const PENDING = Symbol('pending');
+    type MaybeLocation = Location | null | typeof PENDING;
+
     const location$ = merge(
-      this.locationService.detectLocation(),
+      this.locationService.detectLocation().pipe(
+        catchError(() => of(null))
+      ),
       this.manualCity$.pipe(
         debounceTime(400),
         distinctUntilChanged(),
@@ -183,15 +186,26 @@ export class WeatherDashboardComponent implements OnInit {
     ).pipe(shareReplay(1));
 
     return combineLatest([
-      location$.pipe(startWith(null)),
+      location$.pipe(startWith(PENDING as MaybeLocation)),
       this.unitSubject,
       this.retrySubject.pipe(startWith(undefined)),
     ]).pipe(
       switchMap(([loc, units]) => {
-        if (!loc) {
+        if (loc === PENDING) {
           return of<WeatherState>({
             loading: true,
             error: null,
+            current: null,
+            forecast: null,
+            location: null,
+            themeClass: 'theme-clear-day',
+            stale: false,
+          });
+        }
+        if (!loc) {
+          return of<WeatherState>({
+            loading: false,
+            error: 'Could not detect your location. Please search for a city.',
             current: null,
             forecast: null,
             location: null,
