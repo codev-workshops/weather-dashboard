@@ -24,6 +24,7 @@ import { WeatherService } from '../../core/services/weather.service';
 import { ThemeService } from '../../core/services/theme.service';
 import {
   CurrentWeather,
+  DailyForecast,
   HourlyForecast,
   Location,
   TemperatureUnit,
@@ -31,6 +32,9 @@ import {
 import { CurrentWeatherComponent } from './components/current-weather/current-weather.component';
 import { HourlyForecastComponent } from './components/hourly-forecast/hourly-forecast.component';
 import { LocationDisplayComponent } from './components/location-display/location-display.component';
+import { WeatherDetailsComponent } from './components/weather-details/weather-details.component';
+import { DailyForecastComponent } from './components/daily-forecast/daily-forecast.component';
+import { TemperatureTrendComponent } from './components/temperature-trend/temperature-trend.component';
 import { LoadingSpinnerComponent } from '../../shared/components/loading-spinner/loading-spinner.component';
 import { ErrorMessageComponent } from '../../shared/components/error-message/error-message.component';
 
@@ -39,6 +43,7 @@ interface WeatherState {
   error: string | null;
   current: CurrentWeather | null;
   forecast: HourlyForecast | null;
+  daily: DailyForecast | null;
   location: Location | null;
   themeClass: string;
   stale: boolean;
@@ -64,6 +69,9 @@ interface WeatherState {
     CurrentWeatherComponent,
     HourlyForecastComponent,
     LocationDisplayComponent,
+    WeatherDetailsComponent,
+    DailyForecastComponent,
+    TemperatureTrendComponent,
     LoadingSpinnerComponent,
     ErrorMessageComponent,
   ],
@@ -144,6 +152,27 @@ interface WeatherState {
               [unit]="(unitSubject | async) ?? 'metric'"
             />
           }
+
+          @if (state.forecast) {
+            <app-temperature-trend
+              [forecast]="state.forecast"
+              [unit]="(unitSubject | async) ?? 'metric'"
+            />
+          }
+
+          @if (state.current) {
+            <app-weather-details
+              [weather]="state.current"
+              [unit]="(unitSubject | async) ?? 'metric'"
+            />
+          }
+
+          @if (state.daily) {
+            <app-daily-forecast
+              [forecast]="state.daily"
+              [unit]="(unitSubject | async) ?? 'metric'"
+            />
+          }
         </div>
       </div>
     }
@@ -216,6 +245,7 @@ export class WeatherDashboardComponent implements OnInit {
             error: null,
             current: null,
             forecast: null,
+            daily: null,
             location: null,
             themeClass: 'theme-clear-day',
             stale: false,
@@ -227,6 +257,7 @@ export class WeatherDashboardComponent implements OnInit {
             error: 'Could not detect your location. Please search for a city.',
             current: null,
             forecast: null,
+            daily: null,
             location: null,
             themeClass: 'theme-clear-day',
             stale: false,
@@ -236,13 +267,15 @@ export class WeatherDashboardComponent implements OnInit {
         return forkJoin({
           current: this.weatherService.getCurrentWeather(loc.latitude, loc.longitude, units),
           forecast: this.weatherService.getHourlyForecast(loc.latitude, loc.longitude, units),
+          daily: this.weatherService.getDailyForecast(loc.latitude, loc.longitude, units),
         }).pipe(
           map(
-            ({ current, forecast }): WeatherState => ({
+            ({ current, forecast, daily }): WeatherState => ({
               loading: false,
               error: null,
               current,
               forecast,
+              daily,
               location: loc,
               themeClass: this.themeService.getThemeClass(
                 current.condition,
@@ -257,6 +290,7 @@ export class WeatherDashboardComponent implements OnInit {
             error: null,
             current: null,
             forecast: null,
+            daily: null,
             location: loc,
             themeClass: 'theme-clear-day',
             stale: false,
@@ -266,11 +300,13 @@ export class WeatherDashboardComponent implements OnInit {
               err instanceof Error ? err.message : 'Failed to fetch weather data.';
             const cachedCurrent = this.weatherService['currentWeatherCache$'].getValue();
             const cachedForecast = this.weatherService['hourlyForecastCache$'].getValue();
+            const cachedDaily = this.weatherService['dailyForecastCache$'].getValue();
             return of<WeatherState>({
               loading: false,
               error: message,
               current: cachedCurrent,
               forecast: cachedForecast,
+              daily: cachedDaily,
               location: loc,
               themeClass: cachedCurrent
                 ? this.themeService.getThemeClass(

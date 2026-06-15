@@ -4,16 +4,19 @@ import { BehaviorSubject, Observable, of } from 'rxjs';
 import { map, tap, catchError, retry } from 'rxjs/operators';
 import {
   CurrentWeather,
+  DailyForecast,
+  DailyWeather,
   HourlyForecast,
   HourlyWeather,
   TemperatureUnit,
   WeatherCondition,
 } from '../../models/weather.model';
 import { environment } from '../../../environments/environment';
-import { MOCK_CURRENT_WEATHER, MOCK_HOURLY_FORECAST } from '../mocks/weather.mock';
+import { MOCK_CURRENT_WEATHER, MOCK_DAILY_FORECAST, MOCK_HOURLY_FORECAST } from '../mocks/weather.mock';
 
 const CURRENT_WEATHER_CACHE_KEY = 'weather_dashboard_current';
 const HOURLY_FORECAST_CACHE_KEY = 'weather_dashboard_hourly';
+const DAILY_FORECAST_CACHE_KEY = 'weather_dashboard_daily';
 
 /**
  * Fetches and caches weather data from the OpenWeatherMap API.
@@ -33,11 +36,16 @@ export class WeatherService {
   private hourlyForecastCache$ = new BehaviorSubject<HourlyForecast | null>(
     this.loadFromStorage<HourlyForecast>(HOURLY_FORECAST_CACHE_KEY)
   );
+  private dailyForecastCache$ = new BehaviorSubject<DailyForecast | null>(
+    this.loadFromStorage<DailyForecast>(DAILY_FORECAST_CACHE_KEY)
+  );
 
   /** Observable of the last successfully fetched current weather. */
   cachedCurrentWeather$ = this.currentWeatherCache$.asObservable();
   /** Observable of the last successfully fetched hourly forecast. */
   cachedHourlyForecast$ = this.hourlyForecastCache$.asObservable();
+  /** Observable of the last successfully fetched daily forecast. */
+  cachedDailyForecast$ = this.dailyForecastCache$.asObservable();
 
   /**
    * Calls the OpenWeatherMap `/weather` endpoint and maps the raw
@@ -97,6 +105,32 @@ export class WeatherService {
     );
   }
 
+  /**
+   * Fetches the 5-day/3-hour forecast and aggregates it into daily summaries.
+   * Each day includes min/max temp, dominant condition, and precipitation chance.
+   */
+  getDailyForecast(lat: number, lon: number, units: TemperatureUnit): Observable<DailyForecast> {
+    if (this.isApiKeyMissing()) {
+      console.warn('OpenWeatherMap API key is missing. Returning mock daily forecast.');
+      return of(MOCK_DAILY_FORECAST);
+    }
+
+    const url = `${environment.openWeatherMapBaseUrl}/forecast?lat=${lat}&lon=${lon}&units=${units}&cnt=40&appid=${environment.openWeatherMapApiKey}`;
+    return this.http.get<OpenWeatherForecastResponse>(url).pipe(
+      retry(1),
+      map((res) => this.mapDailyForecast(res)),
+      tap((forecast) => {
+        this.dailyForecastCache$.next(forecast);
+        this.saveToStorage(DAILY_FORECAST_CACHE_KEY, forecast);
+      }),
+      catchError(() => {
+        console.warn('Daily forecast API call failed. Falling back to cached/mock data.');
+        const cached = this.dailyForecastCache$.getValue();
+        return of(cached ?? MOCK_DAILY_FORECAST);
+      })
+    );
+  }
+
   private mapCurrentWeather(res: OpenWeatherCurrentResponse): CurrentWeather {
     return {
       temperature: res.main.temp,
@@ -109,6 +143,10 @@ export class WeatherService {
       sunrise: res.sys.sunrise,
       sunset: res.sys.sunset,
       timestamp: res.dt,
+      visibility: res.visibility ?? 10000,
+      pressure: res.main.pressure ?? 1013,
+      windDeg: res.wind.deg ?? 0,
+      cloudiness: res.clouds?.all ?? 0,
     };
   }
 
@@ -120,6 +158,37 @@ export class WeatherService {
       description: item.weather[0]?.description ?? '',
     }));
     return { hours };
+  }
+
+  private mapDailyForecast(res: OpenWeatherForecastResponse): DailyForecast {
+    const dayMap = new Map<string, OpenWeatherForecastResponse['list']>();
+
+    for (const item of res.list) {
+      const dateKey = new Date(item.dt * 1000).toDateString();
+      const existing = dayMap.get(dateKey) ?? [];
+      existing.push(item);
+      dayMap.set(dateKey, existing);
+    }
+
+    const days: DailyWeather[] = [];
+    for (const [, items] of dayMap) {
+      if (items.length === 0) continue;
+      const temps = items.map((i) => i.main.temp);
+      const midpoint = items[Math.floor(items.length / 2)];
+      days.push({
+        date: items[0].dt,
+        tempMin: Math.min(...temps),
+        tempMax: Math.max(...temps),
+        icon: midpoint.weather[0]?.icon ?? '01d',
+        description: midpoint.weather[0]?.description ?? '',
+        condition: this.mapCondition(midpoint.weather[0]?.main ?? ''),
+        humidity: Math.round(items.reduce((sum, i) => sum + i.main.humidity, 0) / items.length),
+        windSpeed: Math.max(...items.map((i) => i.wind.speed)),
+        pop: Math.max(...items.map((i) => i.pop ?? 0)),
+      });
+    }
+
+    return { days: days.slice(0, 5) };
   }
 
   private mapCondition(main: string): WeatherCondition {
@@ -174,17 +243,21 @@ export class WeatherService {
 /* ------------------------------------------------------------------ */
 
 interface OpenWeatherCurrentResponse {
-  main: { temp: number; feels_like: number; humidity: number };
-  wind: { speed: number };
+  main: { temp: number; feels_like: number; humidity: number; pressure: number };
+  wind: { speed: number; deg: number };
   weather: { main: string; description: string; icon: string }[];
   sys: { sunrise: number; sunset: number };
+  clouds?: { all: number };
+  visibility: number;
   dt: number;
 }
 
 interface OpenWeatherForecastResponse {
   list: {
     dt: number;
-    main: { temp: number };
-    weather: { description: string; icon: string }[];
+    main: { temp: number; humidity: number };
+    weather: { main: string; description: string; icon: string }[];
+    wind: { speed: number };
+    pop?: number;
   }[];
 }
