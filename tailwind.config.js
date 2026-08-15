@@ -6,17 +6,17 @@ module.exports = {
       colors: {
         // OKLCH color system for better perceptual uniformity
         primary: {
-          50: 'oklch(0.98 0.01 150)',
-          100: 'oklch(0.95 0.02 150)',
-          200: 'oklch(0.90 0.04 150)',
-          300: 'oklch(0.82 0.08 150)',
-          400: 'oklch(0.70 0.12 150)',
-          500: 'oklch(0.60 0.15 150)',
-          600: 'oklch(0.50 0.15 150)',
-          700: 'oklch(0.40 0.12 150)',
-          800: 'oklch(0.32 0.08 150)',
-          900: 'oklch(0.25 0.05 150)',
-          950: 'oklch(0.15 0.03 150)',
+          50: 'oklch(0.98 0.01 var(--theme-hue))',
+          100: 'oklch(0.95 0.02 var(--theme-hue))',
+          200: 'oklch(0.90 0.04 var(--theme-hue))',
+          300: 'oklch(0.82 0.08 var(--theme-hue))',
+          400: 'oklch(0.70 0.12 var(--theme-hue))',
+          500: 'oklch(0.60 0.15 var(--theme-hue))',
+          600: 'oklch(0.50 0.15 var(--theme-hue))',
+          700: 'oklch(0.40 0.12 var(--theme-hue))',
+          800: 'oklch(0.32 0.08 var(--theme-hue))',
+          900: 'oklch(0.25 0.05 var(--theme-hue))',
+          950: 'oklch(0.15 0.03 var(--theme-hue))',
         },
       },
       spacing: {

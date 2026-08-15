@@ -29,9 +29,11 @@ import {
   Location,
   TemperatureUnit,
 } from '../../models/weather.model';
+import { ColorThemeId } from '../../models/theme.model';
 import { CurrentWeatherComponent } from './components/current-weather/current-weather.component';
 import { HourlyForecastComponent } from './components/hourly-forecast/hourly-forecast.component';
 import { LocationDisplayComponent } from './components/location-display/location-display.component';
+import { ThemeSwitcherComponent } from './components/theme-switcher/theme-switcher.component';
 import { WeatherDetailsComponent } from './components/weather-details/weather-details.component';
 import { DailyForecastComponent } from './components/daily-forecast/daily-forecast.component';
 import { TemperatureTrendComponent } from './components/temperature-trend/temperature-trend.component';
@@ -69,6 +71,7 @@ interface WeatherState {
     CurrentWeatherComponent,
     HourlyForecastComponent,
     LocationDisplayComponent,
+    ThemeSwitcherComponent,
     WeatherDetailsComponent,
     DailyForecastComponent,
     TemperatureTrendComponent,
@@ -78,7 +81,7 @@ interface WeatherState {
   template: `
     @if (state$ | async; as state) {
       <div
-        [ngClass]="state.themeClass"
+        [ngClass]="[state.themeClass, (colorThemeClass$ | async) ?? '']"
         class="min-h-screen p-4 sm:p-8 transition-all duration-700 relative"
       >
         <!-- Grain texture overlay -->
@@ -98,15 +101,22 @@ interface WeatherState {
                 <p class="text-sm opacity-70">Real-time weather updates</p>
               </div>
             </div>
-            <button
-              (click)="toggleUnit()"
-              class="focus-ring interactive interaction-hover rounded-xl bg-white/20 px-5 py-3 fluid-sm font-semibold transition-all duration-300 hover:bg-white/30 hover:shadow-glow flex items-center gap-2"
-            >
-              <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7h12m0 0l-4-4m4 4l-4 4m0 6H4m0 0l4 4m-4-4l4-4"></path>
-              </svg>
-              {{ (unitSubject | async) === 'metric' ? '°C → °F' : '°F → °C' }}
-            </button>
+            <div class="flex items-center gap-3">
+              <app-theme-switcher
+                [themes]="colorThemes"
+                [active]="(colorTheme$ | async) ?? 'green'"
+                (themeChange)="onColorThemeChange($event)"
+              />
+              <button
+                (click)="toggleUnit()"
+                class="focus-ring interactive interaction-hover rounded-xl bg-white/20 px-5 py-3 fluid-sm font-semibold transition-all duration-300 hover:bg-white/30 hover:shadow-glow flex items-center gap-2"
+              >
+                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7h12m0 0l-4-4m4 4l-4 4m0 6H4m0 0l4 4m-4-4l4-4"></path>
+                </svg>
+                {{ (unitSubject | async) === 'metric' ? '°C → °F' : '°F → °C' }}
+              </button>
+            </div>
           </div>
 
           <!-- Stale data banner -->
@@ -186,6 +196,12 @@ export class WeatherDashboardComponent implements OnInit {
   unitSubject = new BehaviorSubject<TemperatureUnit>('metric');
   retrySubject = new Subject<void>();
 
+  colorThemes = this.themeService.colorThemes;
+  colorTheme$ = this.themeService.colorTheme$;
+  colorThemeClass$ = this.colorTheme$.pipe(
+    map((id) => this.themeService.getColorThemeClass(id))
+  );
+
   private manualCity$ = new Subject<string>();
 
   state$!: ReturnType<typeof this.buildStatePipeline>;
@@ -196,6 +212,10 @@ export class WeatherDashboardComponent implements OnInit {
 
   onCitySearch(query: string): void {
     this.manualCity$.next(query);
+  }
+
+  onColorThemeChange(id: ColorThemeId): void {
+    this.themeService.setColorTheme(id);
   }
 
   toggleUnit(): void {
