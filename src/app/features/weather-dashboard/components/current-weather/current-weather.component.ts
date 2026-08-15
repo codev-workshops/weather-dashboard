@@ -13,42 +13,48 @@ import { CurrentWeather, TemperatureUnit } from '../../../../models/weather.mode
   imports: [CommonModule],
   template: `
     @if (weather) {
-      <div class="rounded-2xl bg-white/10 p-6 backdrop-blur-md">
-        <div class="flex flex-col items-center gap-4 sm:flex-row sm:justify-between">
+      <div class="glass-card p-6 sm:p-8">
+        <div class="flex flex-col items-center gap-6 sm:flex-row sm:justify-between">
           <div class="text-center sm:text-left">
-            <div class="flex items-center justify-center gap-2 sm:justify-start">
-              <img
-                [src]="'https://openweathermap.org/img/wn/' + weather.icon + '@2x.png'"
-                [alt]="weather.description"
-                class="h-20 w-20"
-              />
-              <span class="text-6xl font-bold">
-                {{ weather.temperature | number : '1.0-0' }}°{{ unit === 'metric' ? 'C' : 'F' }}
-              </span>
+            <div class="flex items-center justify-center gap-4 sm:justify-start">
+              <div class="relative group">
+                <img
+                  [src]="'https://openweathermap.org/img/wn/' + weather.icon + '@4x.png'"
+                  [alt]="weather.description"
+                  class="h-24 w-24 transition-transform duration-300 group-hover:scale-110 group-hover:animate-float"
+                />
+                <div class="absolute inset-0 rounded-full bg-white/10 blur-xl opacity-0 group-hover:opacity-100 transition-opacity duration-300"></div>
+              </div>
+              <div class="flex flex-col">
+                <span class="fluid-4xl font-bold tabular-nums tracking-tight">
+                  {{ weather.temperature | number : '1.0-0' }}°
+                </span>
+                <span class="text-sm font-medium opacity-70">{{ unit === 'metric' ? 'Celsius' : 'Fahrenheit' }}</span>
+              </div>
             </div>
-            <p class="mt-1 text-xl capitalize">{{ weather.description }}</p>
+            <p class="mt-2 fluid-xl font-medium capitalize">{{ weather.description }}</p>
           </div>
 
-          <div class="grid grid-cols-2 gap-x-8 gap-y-3 text-sm sm:text-base">
-            <div>
-              <span class="opacity-70">Feels like</span>
-              <p class="text-lg font-semibold">
-                {{ weather.feelsLike | number : '1.0-0' }}°{{ unit === 'metric' ? 'C' : 'F' }}
+          <div class="grid grid-cols-2 gap-x-8 gap-y-4 fluid-sm sm:fluid-base">
+            <div class="interactive interaction-hover p-3 rounded-xl bg-white/5">
+              <span class="block opacity-70 text-xs uppercase tracking-wider mb-1">Feels Like</span>
+              <p class="fluid-lg font-semibold tabular-nums">
+                {{ weather.feelsLike | number : '1.0-0' }}°
               </p>
             </div>
-            <div>
-              <span class="opacity-70">Humidity</span>
-              <p class="text-lg font-semibold">{{ weather.humidity }}%</p>
+            <div class="interactive interaction-hover p-3 rounded-xl bg-white/5">
+              <span class="block opacity-70 text-xs uppercase tracking-wider mb-1">Humidity</span>
+              <p class="fluid-lg font-semibold tabular-nums">{{ weather.humidity }}%</p>
             </div>
-            <div>
-              <span class="opacity-70">Wind</span>
-              <p class="text-lg font-semibold">
+            <div class="interactive interaction-hover p-3 rounded-xl bg-white/5">
+              <span class="block opacity-70 text-xs uppercase tracking-wider mb-1">Wind</span>
+              <p class="fluid-lg font-semibold tabular-nums">
                 {{ weather.windSpeed | number : '1.0-1' }} {{ unit === 'metric' ? 'm/s' : 'mph' }}
               </p>
             </div>
-            <div>
-              <span class="opacity-70">Updated</span>
-              <p class="text-lg font-semibold">
+            <div class="interactive interaction-hover p-3 rounded-xl bg-white/5">
+              <span class="block opacity-70 text-xs uppercase tracking-wider mb-1">Updated</span>
+              <p class="fluid-lg font-semibold">
                 {{ weather.timestamp * 1000 | date : 'shortTime' }}
               </p>
             </div>

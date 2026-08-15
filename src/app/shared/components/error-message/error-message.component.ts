@@ -11,25 +11,28 @@ import { Component, EventEmitter, Input, Output } from '@angular/core';
   standalone: true,
   template: `
     <div
-      class="mx-auto max-w-md rounded-xl bg-red-500/20 p-6 text-center backdrop-blur-sm"
+      class="mx-auto max-w-md glass-card bg-amber-500/20 border-amber-500/30 p-8 text-center"
     >
-      <svg
-        class="mx-auto mb-3 h-10 w-10 text-red-300"
-        fill="none"
-        stroke="currentColor"
-        viewBox="0 0 24 24"
-      >
-        <path
-          stroke-linecap="round"
-          stroke-linejoin="round"
-          stroke-width="2"
-          d="M12 9v2m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"
-        />
-      </svg>
-      <p class="mb-4 text-lg">{{ message }}</p>
+      <div class="relative inline-block mb-4">
+        <div class="absolute inset-0 bg-amber-400/20 rounded-full blur-xl animate-pulse-slow"></div>
+        <svg
+          class="relative mx-auto h-16 w-16 text-amber-100"
+          fill="none"
+          stroke="currentColor"
+          viewBox="0 0 24 24"
+        >
+          <path
+            stroke-linecap="round"
+            stroke-linejoin="round"
+            stroke-width="2"
+            d="M12 9v2m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"
+          />
+        </svg>
+      </div>
+      <p class="mb-6 fluid-lg font-medium">{{ message }}</p>
       <button
         (click)="retry.emit()"
-        class="rounded-lg bg-white/20 px-6 py-2 font-semibold transition hover:bg-white/30"
+        class="focus-ring interactive interaction-hover rounded-xl bg-white/20 px-8 py-3 fluid-base font-semibold transition-all duration-300 hover:bg-white/30 hover:shadow-glow"
       >
         Retry
       </button>

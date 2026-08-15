@@ -15,6 +15,10 @@ export interface CurrentWeather {
   sunrise: number;
   sunset: number;
   timestamp: number;
+  visibility: number;
+  pressure: number;
+  windDeg: number;
+  cloudiness: number;
 }
 
 export interface HourlyForecast {
@@ -26,6 +30,22 @@ export interface HourlyWeather {
   temperature: number;
   icon: string;
   description: string;
+}
+
+export interface DailyWeather {
+  date: number;
+  tempMin: number;
+  tempMax: number;
+  icon: string;
+  description: string;
+  condition: WeatherCondition;
+  humidity: number;
+  windSpeed: number;
+  pop: number;
+}
+
+export interface DailyForecast {
+  days: DailyWeather[];
 }
 
 export type WeatherCondition = 'clear' | 'clouds' | 'rain' | 'snow' | 'thunderstorm' | 'mist';

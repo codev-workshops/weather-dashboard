@@ -24,6 +24,7 @@ import { WeatherService } from '../../core/services/weather.service';
 import { ThemeService } from '../../core/services/theme.service';
 import {
   CurrentWeather,
+  DailyForecast,
   HourlyForecast,
   Location,
   TemperatureUnit,
@@ -31,6 +32,9 @@ import {
 import { CurrentWeatherComponent } from './components/current-weather/current-weather.component';
 import { HourlyForecastComponent } from './components/hourly-forecast/hourly-forecast.component';
 import { LocationDisplayComponent } from './components/location-display/location-display.component';
+import { WeatherDetailsComponent } from './components/weather-details/weather-details.component';
+import { DailyForecastComponent } from './components/daily-forecast/daily-forecast.component';
+import { TemperatureTrendComponent } from './components/temperature-trend/temperature-trend.component';
 import { LoadingSpinnerComponent } from '../../shared/components/loading-spinner/loading-spinner.component';
 import { ErrorMessageComponent } from '../../shared/components/error-message/error-message.component';
 
@@ -39,6 +43,7 @@ interface WeatherState {
   error: string | null;
   current: CurrentWeather | null;
   forecast: HourlyForecast | null;
+  daily: DailyForecast | null;
   location: Location | null;
   themeClass: string;
   stale: boolean;
@@ -64,6 +69,9 @@ interface WeatherState {
     CurrentWeatherComponent,
     HourlyForecastComponent,
     LocationDisplayComponent,
+    WeatherDetailsComponent,
+    DailyForecastComponent,
+    TemperatureTrendComponent,
     LoadingSpinnerComponent,
     ErrorMessageComponent,
   ],
@@ -71,23 +79,42 @@ interface WeatherState {
     @if (state$ | async; as state) {
       <div
         [ngClass]="state.themeClass"
-        class="min-h-screen p-4 transition-all duration-700 sm:p-8"
+        class="min-h-screen p-4 sm:p-8 transition-all duration-700 relative"
       >
-        <div class="mx-auto max-w-3xl">
+        <!-- Grain texture overlay -->
+        <div class="grain-overlay"></div>
+
+        <div class="mx-auto max-w-4xl relative z-10">
           <!-- Header -->
-          <div class="mb-6 flex items-center justify-between">
-            <h1 class="text-3xl font-bold">Weather Dashboard</h1>
+          <div class="mb-8 flex items-center justify-between">
+            <div class="flex items-center gap-3">
+              <div class="interactive interaction-hover p-3 rounded-2xl bg-white/10">
+                <svg class="w-8 h-8" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 15a4 4 0 004 4h9a5 5 0 10-.1-9.999 5.002 5.002 0 10-9.78 2.096A4.001 4.001 0 003 15z"></path>
+                </svg>
+              </div>
+              <div>
+                <h1 class="fluid-3xl font-bold">Weather Dashboard</h1>
+                <p class="text-sm opacity-70">Real-time weather updates</p>
+              </div>
+            </div>
             <button
               (click)="toggleUnit()"
-              class="rounded-lg bg-white/20 px-4 py-2 text-sm font-semibold transition hover:bg-white/30"
+              class="focus-ring interactive interaction-hover rounded-xl bg-white/20 px-5 py-3 fluid-sm font-semibold transition-all duration-300 hover:bg-white/30 hover:shadow-glow flex items-center gap-2"
             >
+              <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7h12m0 0l-4-4m4 4l-4 4m0 6H4m0 0l4 4m-4-4l4-4"></path>
+              </svg>
               {{ (unitSubject | async) === 'metric' ? '°C → °F' : '°F → °C' }}
             </button>
           </div>
 
           <!-- Stale data banner -->
           @if (state.stale) {
-            <div class="mb-4 rounded-lg bg-yellow-500/20 p-3 text-center text-sm">
+            <div class="mb-6 glass-card bg-amber-500/20 border-amber-500/30 p-4 text-center fluid-sm flex items-center justify-center gap-2">
+              <svg class="w-5 h-5 text-amber-300" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z"></path>
+              </svg>
               Showing cached data. Live update failed.
             </div>
           }
@@ -122,6 +149,27 @@ interface WeatherState {
           @if (state.forecast) {
             <app-hourly-forecast
               [forecast]="state.forecast"
+              [unit]="(unitSubject | async) ?? 'metric'"
+            />
+          }
+
+          @if (state.forecast) {
+            <app-temperature-trend
+              [forecast]="state.forecast"
+              [unit]="(unitSubject | async) ?? 'metric'"
+            />
+          }
+
+          @if (state.current) {
+            <app-weather-details
+              [weather]="state.current"
+              [unit]="(unitSubject | async) ?? 'metric'"
+            />
+          }
+
+          @if (state.daily) {
+            <app-daily-forecast
+              [forecast]="state.daily"
               [unit]="(unitSubject | async) ?? 'metric'"
             />
           }
@@ -197,6 +245,7 @@ export class WeatherDashboardComponent implements OnInit {
             error: null,
             current: null,
             forecast: null,
+            daily: null,
             location: null,
             themeClass: 'theme-clear-day',
             stale: false,
@@ -208,6 +257,7 @@ export class WeatherDashboardComponent implements OnInit {
             error: 'Could not detect your location. Please search for a city.',
             current: null,
             forecast: null,
+            daily: null,
             location: null,
             themeClass: 'theme-clear-day',
             stale: false,
@@ -217,13 +267,15 @@ export class WeatherDashboardComponent implements OnInit {
         return forkJoin({
           current: this.weatherService.getCurrentWeather(loc.latitude, loc.longitude, units),
           forecast: this.weatherService.getHourlyForecast(loc.latitude, loc.longitude, units),
+          daily: this.weatherService.getDailyForecast(loc.latitude, loc.longitude, units),
         }).pipe(
           map(
-            ({ current, forecast }): WeatherState => ({
+            ({ current, forecast, daily }): WeatherState => ({
               loading: false,
               error: null,
               current,
               forecast,
+              daily,
               location: loc,
               themeClass: this.themeService.getThemeClass(
                 current.condition,
@@ -238,6 +290,7 @@ export class WeatherDashboardComponent implements OnInit {
             error: null,
             current: null,
             forecast: null,
+            daily: null,
             location: loc,
             themeClass: 'theme-clear-day',
             stale: false,
@@ -247,11 +300,13 @@ export class WeatherDashboardComponent implements OnInit {
               err instanceof Error ? err.message : 'Failed to fetch weather data.';
             const cachedCurrent = this.weatherService['currentWeatherCache$'].getValue();
             const cachedForecast = this.weatherService['hourlyForecastCache$'].getValue();
+            const cachedDaily = this.weatherService['dailyForecastCache$'].getValue();
             return of<WeatherState>({
               loading: false,
               error: message,
               current: cachedCurrent,
               forecast: cachedForecast,
+              daily: cachedDaily,
               location: loc,
               themeClass: cachedCurrent
                 ? this.themeService.getThemeClass(

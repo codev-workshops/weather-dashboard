@@ -3,67 +3,173 @@
 @tailwind utilities;
 
 /* ---------------------------------------------------------------
+   Design tokens and base styles
+   --------------------------------------------------------------- */
+:root {
+  --glass-border: oklch(from var(--color-background) l c h / 0.2);
+  --glass-bg: oklch(from var(--color-background) l c h / 0.15);
+  --glass-shadow: 0 8px 32px 0 oklch(0 0 0 / 0.15);
+  --glass-shadow-hover: 0 12px 40px 0 oklch(0 0 0 / 0.25);
+}
+
+/* ---------------------------------------------------------------
+   Enhanced glassmorphism effects
+   --------------------------------------------------------------- */
+.glass-card {
+  background: var(--glass-bg);
+  backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
+  border: 1px solid var(--glass-border);
+  box-shadow: var(--glass-shadow);
+  border-radius: 1rem;
+  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+.glass-card:hover {
+  box-shadow: var(--glass-shadow-hover);
+  transform: translateY(-2px);
+  border-color: oklch(from var(--color-background) l c h / 0.3);
+}
+
+/* Subtle grain texture for warmth */
+.grain-overlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  pointer-events: none;
+  z-index: 1;
+  opacity: 0.025;
+  background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 256 256' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='noise'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.8' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23noise)'/%3E%3C/svg%3E");
+}
+
+/* ---------------------------------------------------------------
+   Enhanced focus states for accessibility
+   --------------------------------------------------------------- */
+.focus-ring {
+  outline: none;
+  position: relative;
+}
+
+.focus-ring:focus-visible {
+  outline: 2px solid oklch(0.7 0.15 150);
+  outline-offset: 2px;
+  border-radius: 0.375rem;
+}
+
+/* ---------------------------------------------------------------
+   Smooth transitions for all interactive elements
+   --------------------------------------------------------------- */
+.interactive {
+  transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+.interaction-hover:hover {
+  transform: translateY(-1px);
+  box-shadow: 0 4px 12px oklch(0 0 0 / 0.15);
+}
+
+.interaction-active:active {
+  transform: translateY(0);
+}
+
+/* ---------------------------------------------------------------
+   Loading skeleton animation
+   --------------------------------------------------------------- */
+@keyframes shimmer {
+  0% {
+    background-position: -200% 0;
+  }
+  100% {
+    background-position: 200% 0;
+  }
+}
+
+.skeleton {
+  background: linear-gradient(
+    90deg,
+    oklch(from var(--color-background) l c h / 0.1) 0%,
+    oklch(from var(--color-background) l c h / 0.2) 50%,
+    oklch(from var(--color-background) l c h / 0.1) 100%
+  );
+  background-size: 200% 100%;
+  animation: shimmer 1.5s infinite;
+  border-radius: 0.5rem;
+}
+
+/* ---------------------------------------------------------------
    Dynamic weather themes — applied on the dashboard host element
    via [ngClass] binding.
    --------------------------------------------------------------- */
 
 /* Clear */
 .theme-clear-day {
-  background: linear-gradient(135deg, #f6d365, #fda085);
+  background: linear-gradient(135deg, oklch(0.70 0.12 150), oklch(0.50 0.15 150));
+  --color-background: oklch(0.60 0.15 150);
 }
 .theme-clear-night {
-  background: linear-gradient(135deg, #0f2027, #203a43, #2c5364);
+  background: linear-gradient(135deg, oklch(0.25 0.05 150), oklch(0.15 0.03 150), oklch(0.20 0.03 180));
   color: white;
+  --color-background: oklch(0.20 0.04 150);
 }
 
 /* Clouds */
 .theme-clouds-day {
-  background: linear-gradient(135deg, #bdc3c7, #2c3e50);
+  background: linear-gradient(135deg, oklch(0.82 0.08 150), oklch(0.50 0.15 150));
   color: white;
+  --color-background: oklch(0.65 0.12 150);
 }
 .theme-clouds-night {
-  background: linear-gradient(135deg, #2c3e50, #1a1a2e);
+  background: linear-gradient(135deg, oklch(0.32 0.08 150), oklch(0.15 0.03 150));
   color: white;
+  --color-background: oklch(0.25 0.05 150);
 }
 
 /* Rain */
 .theme-rain-day {
-  background: linear-gradient(135deg, #4b6cb7, #182848);
+  background: linear-gradient(135deg, oklch(0.65 0.10 180), oklch(0.40 0.12 150));
   color: white;
+  --color-background: oklch(0.50 0.12 150);
 }
 .theme-rain-night {
-  background: linear-gradient(135deg, #1a1a2e, #16213e);
+  background: linear-gradient(135deg, oklch(0.25 0.05 150), oklch(0.15 0.03 150));
   color: white;
+  --color-background: oklch(0.20 0.04 150);
 }
 
 /* Snow */
 .theme-snow-day {
-  background: linear-gradient(135deg, #e6dada, #274046);
-  color: white;
+  background: linear-gradient(135deg, oklch(0.90 0.06 180), oklch(0.70 0.12 150));
+  --color-background: oklch(0.80 0.10 150);
 }
 .theme-snow-night {
-  background: linear-gradient(135deg, #2c3e50, #4ca1af);
+  background: linear-gradient(135deg, oklch(0.40 0.12 150), oklch(0.25 0.05 150));
   color: white;
+  --color-background: oklch(0.32 0.08 150);
 }
 
 /* Thunderstorm */
 .theme-thunderstorm-day {
-  background: linear-gradient(135deg, #373b44, #4286f4);
+  background: linear-gradient(135deg, oklch(0.40 0.12 150), oklch(0.25 0.05 150));
   color: white;
+  --color-background: oklch(0.32 0.08 150);
 }
 .theme-thunderstorm-night {
-  background: linear-gradient(135deg, #0f0c29, #302b63, #24243e);
+  background: linear-gradient(135deg, oklch(0.15 0.03 150), oklch(0.15 0.03 150), oklch(0.18 0.04 180));
   color: white;
+  --color-background: oklch(0.16 0.03 150);
 }
 
 /* Mist / Fog / Haze */
 .theme-mist-day {
-  background: linear-gradient(135deg, #d7d2cc, #304352);
-  color: white;
+  background: linear-gradient(135deg, oklch(0.82 0.08 150), oklch(0.60 0.15 150));
+  --color-background: oklch(0.70 0.12 150);
 }
 .theme-mist-night {
-  background: linear-gradient(135deg, #232526, #414345);
+  background: linear-gradient(135deg, oklch(0.25 0.05 150), oklch(0.28 0.06 180));
   color: white;
+  --color-background: oklch(0.26 0.05 150);
 }
 
 /* Smooth scrollbar for hourly forecast */
