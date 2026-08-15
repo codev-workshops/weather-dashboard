@@ -241,7 +241,7 @@ describe('LocationService', () => {
       service.searchCity('Paris').subscribe();
       httpMock.expectOne(() => true).flush('boom', { status: 500, statusText: 'Server Error' });
 
-      httpMock.expectNone(() => true);
+      expect(httpMock.match(() => true).length).toBe(0);
     });
   });
 });
