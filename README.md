@@ -117,3 +117,19 @@ ng lint
 ```bash
 ng build
 ```
+
+## Tests
+
+Unit tests run through Karma/Jasmine. Specs live next to their source as
+`*.spec.ts` and cover the core services (`WeatherService`, `LocationService`,
+`ThemeService`), including the OpenWeatherMap request/response contract via
+`HttpTestingController`.
+
+```bash
+npm test -- --watch=false --browsers=ChromeHeadless
+```
+
+## Continuous Integration
+
+`.github/workflows/ci.yml` runs on every push and pull request: `npm ci`,
+`npm run lint`, `npm run build`, and the headless test suite on Node 20.
