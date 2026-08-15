@@ -1,17 +1,25 @@
 # AGENTS.md — Weather Dashboard
 
-## Build & Lint
+## Install, Build, Lint & Test
+
+All four feedback loops below are verified working; run them from the repo root.
 
 ```bash
-npm install
-ng build          # production build
-ng serve          # dev server on http://localhost:4200
-ng lint           # ESLint via @angular-eslint
-npm test -- --watch=false --browsers=ChromeHeadless   # Karma/Jasmine unit tests
+npm ci                                                # install (clean, lockfile-exact)
+npm run build                                         # production build via ng build
+npm run lint                                          # ESLint via @angular-eslint
+CHROME_BIN=$(which google-chrome) \
+  npm test -- --watch=false --browsers=ChromeHeadless # Karma/Jasmine unit tests
+npm start                                             # dev server on http://localhost:4200
 ```
 
-GitHub Actions (`.github/workflows/ci.yml`) runs `npm ci`, `npm run lint`,
-`npm run build`, and the headless test suite on every push and pull request.
+- `CHROME_BIN` is only needed where Karma cannot auto-detect Chrome (containers/CI images
+  without a default install); it is harmless otherwise.
+- **The OpenWeatherMap API is fully mocked in tests** — specs use
+  `HttpClientTestingModule` / `HttpTestingController`, so the suite makes no network
+  calls and needs no API key.
+- GitHub Actions (`.github/workflows/ci.yml`) runs `npm ci`, `npm run lint`,
+  `npm run build`, and the headless test suite on Node 20 for every push and pull request.
 
 ## Conventions
 
