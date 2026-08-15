@@ -1,6 +1,10 @@
 # Weather Dashboard
 
-A responsive Angular 17 weather dashboard that detects user location via the browser Geolocation API, fetches real-time weather from OpenWeatherMap, and dynamically themes the UI based on weather conditions and time of day.
+A responsive Angular 17 weather dashboard that detects user location via the browser Geolocation API, fetches real-time weather from OpenWeatherMap, and dynamically themes the UI based on weather conditions and time of day. A colour theme picker lets the user shift the whole palette (Forest, Ocean, Twilight, Sunset, Blossom); the choice is persisted in `localStorage`.
+
+## Colour themes
+
+Every gradient and accent in `src/styles.scss` is expressed in OKLCH against `--theme-hue` / `--theme-hue-alt`, so a colour theme is just a `.palette-*` class overriding those two hues. `ThemeService.colorThemes` is the single source of truth; adding a theme means adding one entry there, one `ColorThemeId` union member, and one `.palette-*` rule.
 
 ## Architecture
 
@@ -12,7 +16,7 @@ src/app/
 │   ├── services/
 │   │   ├── location.service.ts   — Geolocation + geocoding
 │   │   ├── weather.service.ts    — API calls, caching, mapping
-│   │   └── theme.service.ts      — Condition/time → CSS class
+│   │   └── theme.service.ts      — Condition/time → CSS class + colour themes
 │   └── mocks/
 │       └── weather.mock.ts       — Fallback data when API is unavailable
 ├── shared/          # Reusable, stateless UI components
